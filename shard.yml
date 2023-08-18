@@ -4,14 +4,15 @@ version: 0.1.0
 authors:
   - Romain Franceschini <franceschini.romain@gmail.com>
 
-crystal: 1.1.1
+crystal: 1.9.2
 
 license: MIT
 
 dependencies:
   zeromq:
-    github: crystal-community/zeromq-crystal
-    branch: master
+    github: blitline-dev/zeromq-crystal
+    # https://github.com/crystal-community/zeromq-crystal/pull/28
+    commit: 8b6257897fc0475f6c9b85f99965e4893d87fca3
   icr:
     github: crystal-community/icr
     branch: master
@@ -19,4 +20,3 @@ dependencies:
 targets:
   icrystal:
     main: src/cli.cr
-
