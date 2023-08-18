@@ -1,0 +1,14 @@
+version: 2.0
+shards:
+  icr:
+    git: https://github.com/crystal-community/icr.git
+    version: 0.9.0+git.commit.f62bfcdfbe65ee31c46c3d9951cee08ac2e0bee0
+
+  readline:
+    git: https://github.com/crystal-lang/crystal-readline.git
+    version: 0.1.1+git.commit.69ecf33d7cad5568d7d19333510cfd9d17cb1bbd
+
+  zeromq:
+    git: https://github.com/blitline-dev/zeromq-crystal.git
+    version: 0.3.0+git.commit.8b6257897fc0475f6c9b85f99965e4893d87fca3
+
