@@ -17,3 +17,4 @@ devenv.local.nix
 
 
 .ipynb_checkpoints/
+jupyter_data/

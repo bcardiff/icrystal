@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
 {
+  env.JUPYTER_DATA_DIR = "./jupyter_data";
+
   packages = [ ];
 
   enterShell = ''
