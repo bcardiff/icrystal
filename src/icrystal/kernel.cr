@@ -41,7 +41,8 @@ module ICrystal
 
       Message.key = @config.key
       @session = Session.new(@config)
-      @backend = ICRBackend.new
+      # @backend = ICRBackend.new
+      @backend = CrystalInterpreterBackend.new
     end
 
     def run
@@ -238,7 +239,7 @@ module ICrystal
       result = @backend.eval(code, store_history)
       output = nil
 
-      if result.is_a?(Icr::ExecutionResult)
+      if result.is_a?(ExecutionResult)
         if result.success?
           if stdout = result.output
             @session.publish("stream", build_content(name: "stdout", text: stdout))
