@@ -75,4 +75,23 @@ require "compiler/crystal/interpreter/repl"
 
 require "compiler/crystal/interpreter/to_bool"
 require "compiler/crystal/interpreter/value"
+
 # end require "compiler/crystal/interpreter/*"
+
+class Crystal::Repl
+  def prepare
+    load_prelude
+  end
+
+  def interpret_part(expression)
+    parser = new_parser(expression)
+    # TODO change warnigns output
+    parser.warnings.report(STDOUT)
+
+    node = parser.parse
+    # TODO handle errors
+    # next unless node
+
+    interpret(node)
+  end
+end

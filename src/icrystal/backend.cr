@@ -78,18 +78,18 @@ module ICrystal
 
   class CrystalInterpreterBackend
     def initialize
-      @program = Crystal::Program.new
-      @context = Crystal::Repl::Context.new(@program)
-      @main_visitor = Crystal::MainVisitor.new(@program)
-
-      @interpreter = Crystal::Repl::Interpreter.new(@context)
+      @repl = Crystal::Repl.new
+      @repl.prepare
     end
 
     def eval(code, store_history)
-      ExecutionResult.new(true, "result", "output", nil)
+      value = @repl.interpret_part(code)
+
+      ExecutionResult.new(true, value.to_s, "", nil)
     end
 
     def check_syntax(code)
+      # TODO @repl.parse_code but with a different STDOUT for warnings
       Crystal::Parser.parse(code)
       ICrystal::SyntaxCheckResult.new(:ok)
     rescue err : Crystal::SyntaxException
