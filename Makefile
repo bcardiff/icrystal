@@ -16,6 +16,14 @@ $(BINDIR)/icrystal:
 	mkdir -p $(BINDIR)
 	$(EXPORTS) $(CRYSTAL) build $(FLAGS) src/cli.cr -o $(BINDIR)/icrystal
 
+.PHONY: $(BINDIR)/spec
+$(BINDIR)/spec:
+	mkdir -p $(BINDIR)
+	$(EXPORTS) $(CRYSTAL) build $(FLAGS) spec/**_spec.cr -o $(BINDIR)/spec
+
+.PHONY: spec
+spec: $(BINDIR)/spec
+	$(BINDIR)/spec
 
 .PHONY: all
 all: $(BINDIR)/icrystal

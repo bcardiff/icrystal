@@ -77,12 +77,20 @@ make all CRYSTAL=~/path/to/crystal-clone/bin/crystal
 
 In either case, the icrystal binary will be left in the `./bin/icrystal`.
 
+To specify a specific llvm-config, use the `LLVM_CONFIG` environment variable.
+
 ### Specs
 
 To run the crystal specs do
 
 ```
-crystal spec
+make spec
+```
+
+or
+
+```
+make spec CRYSTAL=~/path/to/crystal-clone/bin/crystal
 ```
 
 To run the jupyter kernel testing tool (Python 3.4 or greater required):

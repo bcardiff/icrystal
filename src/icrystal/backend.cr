@@ -83,14 +83,27 @@ module ICrystal
     end
 
     def eval(code, store_history)
+      syntax_check_result = check_syntax(code)
+      return syntax_check_result unless syntax_check_result.status == :ok
+
       value = @repl.interpret_part(code)
 
       ExecutionResult.new(true, value.to_s, "", nil)
     end
 
     def check_syntax(code)
-      # TODO @repl.parse_code but with a different STDOUT for warnings
-      Crystal::Parser.parse(code)
+      # TODO warnings treatment. Based on @repl.parse_code
+      # TODO avoid parsing twice on eval
+
+      warnings = @repl.program.warnings.dup
+      warnings.infos = [] of String
+      parser = Crystal::Parser.new code, @repl.program.string_pool, warnings: warnings
+      # parser.filename = filename
+      parsed_nodes = parser.parse
+      pp! parsed_nodes
+      # warnings.report(STDOUT)
+      # @program.normalize(parsed_nodes, inside_exp: false)
+
       ICrystal::SyntaxCheckResult.new(:ok)
     rescue err : Crystal::SyntaxException
       case err.message.to_s
