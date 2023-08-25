@@ -13,9 +13,6 @@ dependencies:
     github: blitline-dev/zeromq-crystal
     # https://github.com/crystal-community/zeromq-crystal/pull/28
     commit: 8b6257897fc0475f6c9b85f99965e4893d87fca3
-  icr:
-    github: crystal-community/icr
-    branch: master
 
 targets:
   icrystal:
