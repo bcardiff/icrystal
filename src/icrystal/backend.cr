@@ -77,8 +77,9 @@ module ICrystal
   # end
 
   class CrystalInterpreterBackend
-    def initialize
+    def initialize(*, prelude = nil)
       @repl = Crystal::Repl.new
+      @repl.prelude = prelude if prelude
       @repl.prepare
     end
 
@@ -100,7 +101,6 @@ module ICrystal
       parser = Crystal::Parser.new code, @repl.program.string_pool, warnings: warnings
       # parser.filename = filename
       parsed_nodes = parser.parse
-      pp! parsed_nodes
       # warnings.report(STDOUT)
       # @program.normalize(parsed_nodes, inside_exp: false)
 
