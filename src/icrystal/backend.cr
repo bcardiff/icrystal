@@ -14,7 +14,7 @@ module ICrystal
 
       value = @repl.interpret_part(code)
 
-      ExecutionResult.new(true, value.to_s, "", nil)
+      ExecutionResult.new(true, value.to_s, nil, nil)
     end
 
     def check_syntax(code)

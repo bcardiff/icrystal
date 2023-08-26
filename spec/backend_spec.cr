@@ -1,17 +1,15 @@
 require "./spec_helper"
 
+def assert_eval(backend, code, value, output = nil, error_output = nil)
+  result = backend.eval(code, false)
+  result.should eq(ICrystal::ExecutionResult.new(true, value, output, error_output))
+end
+
 describe ICrystal do
   describe "backend" do
     it "evals" do
       backend = ICrystal::CrystalInterpreterBackend.new
-      result = backend.eval("1 + 2", false)
-      result.should be_a(ICrystal::ExecutionResult)
-
-      result = result.as(ICrystal::ExecutionResult)
-      result.success?.should be_true
-
-      result.value.should eq "3"
-      result.output.should eq ""
+      assert_eval(backend, "1 + 2", "3")
     end
 
     it "returns syntax errors" do

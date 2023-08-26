@@ -7,4 +7,6 @@ class ICrystal::ExecutionResult
   def success?
     @success
   end
+
+  def_equals_and_hash success, value, output, error_output
 end
