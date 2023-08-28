@@ -69,11 +69,15 @@ To build icrystal using the install crystal compiler run:
 make all
 ```
 
+NOTE: you will need to have the same llvm version installed as the one informed in `crystal --version`.
+
 To build icrystal using crystal sources run:
 
 ```
 make all CRYSTAL=~/path/to/crystal-clone/bin/crystal
 ```
+
+NOTE: you will need to run `make clean deps` in your crystal-clone first.
 
 In either case, the icrystal binary will be left in the `./bin/icrystal`.
 
