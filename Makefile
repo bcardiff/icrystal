@@ -16,6 +16,11 @@ $(BINDIR)/icrystal:
 	mkdir -p $(BINDIR)
 	$(EXPORTS) $(CRYSTAL) build $(FLAGS) src/cli.cr -o $(BINDIR)/icrystal
 
+.PHONY: $(BINDIR)/interpreter
+$(BINDIR)/interpreter:
+	mkdir -p $(BINDIR)
+	$(EXPORTS) $(CRYSTAL) build $(FLAGS) src/interpreter/cli.cr -o $(BINDIR)/interpreter
+
 .PHONY: $(BINDIR)/spec
 $(BINDIR)/spec:
 	mkdir -p $(BINDIR)
@@ -26,7 +31,7 @@ spec: $(BINDIR)/spec
 	$(BINDIR)/spec
 
 .PHONY: all
-all: $(BINDIR)/icrystal
+all: $(BINDIR)/icrystal $(BINDIR)/interpreter
 
 clean:
 	rm -f bin/*

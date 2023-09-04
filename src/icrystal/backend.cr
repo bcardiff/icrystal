@@ -1,4 +1,4 @@
-require "../interpreter"
+require "../crystal/repl"
 
 module ICrystal
   class CrystalInterpreterBackend
