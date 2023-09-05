@@ -110,7 +110,7 @@ module ICrystal
       end
     end
 
-    def error_content(e)
+    def error_content(e : Exception)
       build_content(
         status: "error",
         ename: e.class.to_s,
@@ -118,6 +118,15 @@ module ICrystal
         traceback: e.backtrace.map(&.as(Any)).unshift(
           "#{e.class.to_s.colorize(:red)}: #{e.message}"
         )
+      )
+    end
+
+    def error_content(e : SyntaxCheckResult)
+      build_content(
+        status: "error",
+        ename: "TBD syntaxt error",
+        evalue: e.error_message,
+        traceback: "TBD backtrace"
       )
     end
 
@@ -239,7 +248,8 @@ module ICrystal
       result = @backend.eval(code, store_history)
       output = nil
 
-      if result.is_a?(ExecutionResult)
+      case result
+      in ExecutionResult
         if result.success?
           if stdout = result.output
             @session.publish("stream", build_content(name: "stdout", text: stdout))
@@ -253,12 +263,10 @@ module ICrystal
             @session.publish "stream", build_content(name: "stderr", text: stdout)
           end
         end
-      else
-        if exception = result.err
-          content = error_content(exception)
-          content["execution_count"] = @execution_count
-          @session.publish "error", content
-        end
+      in SyntaxCheckResult
+        content = error_content(result)
+        content["execution_count"] = @execution_count
+        @session.publish "error", content
       end
 
       @session.send_reply "execute_reply", content

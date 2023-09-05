@@ -1,37 +1,70 @@
-require "../crystal/repl"
+require "http/client"
+require "../interpreter/api"
 
 module ICrystal
   class CrystalInterpreterBackend
+    @socket_path : String
+    @input : IO::Memory
+    @output : IO::Memory
+    @error : IO::Memory
+    @server : Process
+    @client : HTTP::Client
+
     def initialize(*, prelude = nil)
-      @repl = Crystal::Repl.new
-      @repl.prelude = prelude if prelude
-      @repl.prepare
+      @socket_path = File.tempname("crystal", ".sock")
+
+      @input = IO::Memory.new
+      @output = IO::Memory.new
+      @error = IO::Memory.new
+
+      @server = Process.new("./bin/interpreter", {@socket_path}, input: @input, output: @output, error: @error)
+
+      @client = retry do
+        HTTP::Client.new(UNIXSocket.new(@socket_path))
+      end
+
+      # TODO assert status ok
+      @client.post("/v1/start")
     end
 
-    def eval(code, store_history)
-      syntax_check_result = check_syntax(code)
-      return syntax_check_result unless syntax_check_result.status == :ok
-
-      value = @repl.interpret_part(code)
-
-      ExecutionResult.new(true, value.to_s, nil, nil)
+    def close
+      @server.close
+      @client.close
+      # TODO delete socket
+      # @socket.delete
     end
 
-    def check_syntax(code)
-      # TODO warnings treatment. Based on @repl.parse_code
-      # TODO avoid parsing twice on eval
+    def check_syntax(code) : SyntaxCheckResult
+      # TODO check status ok
+      response = CheckSyntaxResponse.from_json(@client.post("/v1/check_syntax", body: code).body)
+      case response
+      when CheckSyntaxSuccess
+        ICrystal::SyntaxCheckResult.new(:ok)
+      when CheckSyntaxError
+        to_icrystal_syntax_check_result(response.message)
+      else
+        raise NotImplementedError.new("Unknown response")
+      end
+    end
 
-      warnings = @repl.program.warnings.dup
-      warnings.infos = [] of String
-      parser = Crystal::Parser.new code, @repl.program.string_pool, warnings: warnings
-      # parser.filename = filename
-      parsed_nodes = parser.parse
-      # warnings.report(STDOUT)
-      # @program.normalize(parsed_nodes, inside_exp: false)
+    def eval(code, store_history) : ExecutionResult | SyntaxCheckResult
+      # TODO check status ok
+      response = EvalResponse.from_json(@client.post("/v1/eval", body: code).body)
+      case response
+      when EvalSuccess
+        # TODO read stdout and stderr
+        ExecutionResult.new(true, response.value, nil, nil)
+      when EvalSyntaxError
+        to_icrystal_syntax_check_result(response.message)
+      when EvalError
+        ExecutionResult.new(false, nil, nil, response.message)
+      else
+        raise NotImplementedError.new("Unknown response")
+      end
+    end
 
-      ICrystal::SyntaxCheckResult.new(:ok)
-    rescue err : Crystal::SyntaxException
-      case err.message.to_s
+    private def to_icrystal_syntax_check_result(message : String)
+      case message
       when .includes?("EOF")
         ICrystal::SyntaxCheckResult.new(:unexpected_eof)
       when .includes?("unterminated char literal")
@@ -41,8 +74,19 @@ module ICrystal
         # catches unterminated hashes and arrays
         ICrystal::SyntaxCheckResult.new(:unterminated_literal)
       else
-        ICrystal::SyntaxCheckResult.new(:error, err.message.to_s)
-      end.tap { |result| result.err = err }
+        ICrystal::SyntaxCheckResult.new(:error, message)
+      end
+    end
+
+    private def retry
+      last_ex = nil
+      3.times do
+        return yield
+      rescue ex
+        sleep 0.1
+        last_ex = ex
+      end
+      raise last_ex.not_nil!
     end
   end
 end
