@@ -52,8 +52,11 @@ module ICrystal
       response = EvalResponse.from_json(@client.post("/v1/eval", body: code).body)
       case response
       when EvalSuccess
-        # TODO read stdout and stderr
-        ExecutionResult.new(true, response.value, nil, nil)
+        eval_stdout = @output.rewind.gets_to_end.presence
+        eval_stderr = @error.rewind.gets_to_end.presence
+        @output.clear
+        @error.clear
+        res = ExecutionResult.new(true, response.value, eval_stdout, eval_stderr)
       when EvalSyntaxError
         to_icrystal_syntax_check_result(response.message)
       when EvalError
