@@ -41,7 +41,6 @@ module ICrystal
 
       Message.key = @config.key
       @session = Session.new(@config)
-      # @backend = ICRBackend.new
       @backend = CrystalInterpreterBackend.new
     end
 
