@@ -1,5 +1,16 @@
 require "json"
 
+class StartResult
+  include JSON::Serializable
+
+  property status : String
+
+  def initialize(@status : String)
+  end
+
+  def_equals_and_hash status
+end
+
 abstract class EvalResponse
   include JSON::Serializable
 
@@ -15,28 +26,36 @@ class EvalSuccess < EvalResponse
   protected def on_to_json(json : ::JSON::Builder)
     json.field "type", "success"
   end
+
+  def_equals_and_hash value
 end
 
 class EvalSyntaxError < EvalResponse
   property message : String
+  property backtrace : Array(String)
 
-  def initialize(@message : String)
+  def initialize(@message : String, @backtrace : Array(String))
   end
 
   protected def on_to_json(json : ::JSON::Builder)
     json.field "type", "syntax_error"
   end
+
+  def_equals_and_hash message, backtrace
 end
 
 class EvalError < EvalResponse
   property message : String
+  property backtrace : Array(String)
 
-  def initialize(@message : String)
+  def initialize(@message : String, @backtrace : Array(String))
   end
 
   protected def on_to_json(json : ::JSON::Builder)
     json.field "type", "error"
   end
+
+  def_equals_and_hash message, backtrace
 end
 
 abstract class CheckSyntaxResponse
@@ -56,11 +75,14 @@ end
 
 class CheckSyntaxError < CheckSyntaxResponse
   property message : String
+  property backtrace : Array(String)
 
   protected def on_to_json(json : ::JSON::Builder)
     json.field "type", "error"
   end
 
-  def initialize(@message : String)
+  def initialize(@message : String, @backtrace : Array(String))
   end
+
+  def_equals_and_hash message, backtrace
 end

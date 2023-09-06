@@ -2,7 +2,9 @@ require "http/server"
 require "./api"
 require "../crystal/repl"
 
-def check_syntax(repl, code) : String?
+record SyntaxError, message : String, backtrace : Array(String)
+
+def check_syntax(repl, code) : SyntaxError?
   # TODO warnings treatment. Based on @repl.parse_code
   # TODO avoid parsing twice on eval
 
@@ -15,20 +17,22 @@ def check_syntax(repl, code) : String?
   # @program.normalize(parsed_nodes, inside_exp: false)
 
   nil
-rescue err : Crystal::SyntaxException
-  err.message.to_s
+rescue e : Crystal::SyntaxException
+  SyntaxError.new(message: e.message.to_s, backtrace: e.to_s.lines)
 end
 
 def eval(repl, code)
   syntax_error_result = check_syntax(repl, code)
-  return EvalSyntaxError.new(syntax_error_result) if syntax_error_result
+  if syntax_error_result
+    return EvalSyntaxError.new(syntax_error_result.message, syntax_error_result.backtrace)
+  end
 
   begin
     value = repl.interpret_part(code)
 
     EvalSuccess.new(value.to_s)
   rescue ex
-    EvalError.new(ex.message.to_s)
+    EvalError.new(ex.message.to_s, ex.to_s.lines)
   end
 end
 
@@ -44,7 +48,8 @@ server = HTTP::Server.new do |context|
     repl.prepare
 
     context.response.content_type = "text/json"
-    context.response.print %({"status": "ok"})
+    result = StartResult.new(status: "ok")
+    result.to_json(context.response)
   when {"POST", "/v1/check_syntax"}
     code = context.request.body.try(&.gets_to_end) || ""
     context.response.content_type = "text/json"
@@ -53,7 +58,7 @@ server = HTTP::Server.new do |context|
       if check_syntax_result.nil?
         CheckSyntaxSuccess.new
       else
-        CheckSyntaxError.new(check_syntax_result)
+        CheckSyntaxError.new(check_syntax_result.message, check_syntax_result.backtrace)
       end
 
     result.to_json(context.response)
