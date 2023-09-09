@@ -43,7 +43,7 @@ class Client
 
   private def retry
     last_ex = nil
-    3.times do
+    5.times do
       return yield
     rescue ex
       sleep 0.1
@@ -73,7 +73,21 @@ describe "http interpreter" do
   it_ "can evaluate with prelude" do |c|
     c.post("/v1/start", as: StartResult)
     c.post("/v1/eval", body: "1 + 2", as: EvalResponse)
-      .should eq(EvalSuccess.new("3"))
+      .should eq(EvalSuccess.new("3", "Int32", "Int32"))
+  end
+
+  describe "can return static and runtime type information for" do
+    it_ "MixedUnionType" do |c|
+      c.post("/v1/start", as: StartResult)
+      c.post("/v1/eval", body: "1 || \"a\"", as: EvalResponse)
+        .should eq(EvalSuccess.new("1", "Int32", "(Int32 | String)"))
+    end
+
+    it_ "UnionType" do |c|
+      c.post("/v1/start", as: StartResult)
+      c.post("/v1/eval", body: "true || 1", as: EvalResponse)
+        .should eq(EvalSuccess.new("true", "Bool", "(Bool | Int32)"))
+    end
   end
 
   it_ "can check syntax errors" do |c|

@@ -19,15 +19,17 @@ end
 
 class EvalSuccess < EvalResponse
   property value : String
+  property runtime_type : String
+  property static_type : String
 
-  def initialize(@value : String)
+  def initialize(@value : String, @runtime_type : String, @static_type : String)
   end
 
   protected def on_to_json(json : ::JSON::Builder)
     json.field "type", "success"
   end
 
-  def_equals_and_hash value
+  def_equals_and_hash value, runtime_type, static_type
 end
 
 class EvalSyntaxError < EvalResponse

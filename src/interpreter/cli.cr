@@ -30,7 +30,7 @@ def eval(repl, code)
   begin
     value = repl.interpret_part(code)
 
-    EvalSuccess.new(value.to_s)
+    EvalSuccess.new(value.to_s, value.runtime_type.to_s, value.type.to_s)
   rescue ex
     EvalError.new(ex.message.to_s, ex.to_s.lines)
   end
