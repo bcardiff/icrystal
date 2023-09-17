@@ -18,7 +18,7 @@ module ICrystal
       @error = IO::Memory.new
 
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
-      @server = Process.new(Path[exec_dir, "interpreter"].to_s, {@socket_path}, input: @input, output: @output, error: @error)
+      @server = Process.new(Path[exec_dir, "crystal-repl-server"].to_s, {@socket_path}, input: @input, output: @output, error: @error)
 
       @client = retry do
         HTTP::Client.new(UNIXSocket.new(@socket_path))
