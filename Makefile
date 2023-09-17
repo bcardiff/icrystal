@@ -11,27 +11,24 @@ SHELL = sh
 
 BINDIR = ./bin
 
-.PHONY: $(BINDIR)/icrystal
-$(BINDIR)/icrystal:
+$(BINDIR)/icrystal: src/cli.cr src/icrystal.cr src/icrystal/*.cr
 	mkdir -p $(BINDIR)
-	$(EXPORTS) $(CRYSTAL) build $(FLAGS) src/cli.cr -o $(BINDIR)/icrystal
+	$(CRYSTAL) build $(FLAGS) src/cli.cr -o $(BINDIR)/icrystal
 
-.PHONY: $(BINDIR)/interpreter
-$(BINDIR)/interpreter:
+$(BINDIR)/spec: src/*.cr src/**/*.cr spec/*.cr
 	mkdir -p $(BINDIR)
-	$(EXPORTS) $(CRYSTAL) build $(FLAGS) src/interpreter/cli.cr -o $(BINDIR)/interpreter
+	$(CRYSTAL) build $(FLAGS) spec/**_spec.cr -o $(BINDIR)/spec
 
-.PHONY: $(BINDIR)/spec
-$(BINDIR)/spec:
-	mkdir -p $(BINDIR)
-	$(EXPORTS) $(CRYSTAL) build $(FLAGS) spec/**_spec.cr -o $(BINDIR)/spec
+.PHONY: $(BINDIR)/crystal-repl-server
+$(BINDIR)/crystal-repl-server:
+	$(MAKE) -C ./lib/crystal-repl-server ../../bin/crystal-repl-server BINDIR=../../bin CRYSTAL=$(CRYSTAL) $(EXPORTS)
 
 .PHONY: spec
 spec: $(BINDIR)/spec
 	$(BINDIR)/spec
 
 .PHONY: all
-all: $(BINDIR)/icrystal $(BINDIR)/interpreter
+all: $(BINDIR)/icrystal $(BINDIR)/crystal-repl-server spec
 
 clean:
 	rm -f bin/*
