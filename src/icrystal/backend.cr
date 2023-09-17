@@ -1,5 +1,7 @@
 require "http/client"
-require "../interpreter/api"
+require "crystal-repl-server/common/api"
+
+include Crystal::Repl::Server::API
 
 module ICrystal
   class CrystalInterpreterBackend
