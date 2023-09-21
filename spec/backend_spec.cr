@@ -27,8 +27,7 @@ describe ICrystal do
     end
 
     it "returns syntax errors" do
-      # using primitives as prelude due to https://github.com/crystal-lang/crystal/issues/11602
-      backend = ICrystal::CrystalInterpreterBackend.new(prelude: "primitives")
+      backend = ICrystal::CrystalInterpreterBackend.new
       result = backend.eval("a = [1", false)
       result.should be_a(ICrystal::SyntaxCheckResult)
 

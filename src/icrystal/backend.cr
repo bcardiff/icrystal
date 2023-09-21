@@ -7,7 +7,7 @@ module ICrystal
   class CrystalInterpreterBackend
     @client : Crystal::Repl::Server::Client
 
-    def initialize(*, prelude = nil)
+    def initialize
       @socket_path = File.tempname("crystal", ".sock")
 
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
