@@ -2,7 +2,7 @@ version: 2.0
 shards:
   crystal-repl-server:
     git: https://github.com/bcardiff/crystal-repl-server.git
-    version: 0.1.0+git.commit.44051ee3bb6ae224ee418e033cb10d92b5f3243a
+    version: 0.1.0+git.commit.67f1bd470d870714842bf115583dfbbe87eb8b46
 
   zeromq:
     git: https://github.com/crystal-community/zeromq-crystal.git
