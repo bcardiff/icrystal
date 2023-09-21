@@ -39,7 +39,13 @@ module ICrystal
       response = @client.eval(code)
       case response
       when EvalSuccess
-        ExecutionResult.new(true, response.value, @client.read_stdout, @client.read_stderr)
+        if response.static_type == "Nil" && response.runtime_type == response.static_type
+          # CHECK: is this a good idea? To avoid retuning nil on method defs or puts
+          #        we hide the value
+          ExecutionResult.new(true, nil, @client.read_stdout, @client.read_stderr)
+        else
+          ExecutionResult.new(true, response.value, @client.read_stdout, @client.read_stderr)
+        end
       when EvalSyntaxError
         to_icrystal_syntax_check_result(response.message)
       when EvalError
