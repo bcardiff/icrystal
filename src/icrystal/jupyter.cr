@@ -1,7 +1,7 @@
 module ICrystal::Jupyter
   extend self
 
-  # See https://jupyter.readthedocs.io/en/latest/projects/jupyter-directories.html
+  # See https://docs.jupyter.org/en/latest/use/jupyter-directories.html
   def default_data_dir
     if macos?
       File.expand_path("~/Library/Jupyter", home: Path.home)

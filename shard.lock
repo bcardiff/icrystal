@@ -1,0 +1,10 @@
+version: 2.0
+shards:
+  crystal-repl-server:
+    git: https://github.com/bcardiff/crystal-repl-server.git
+    version: 0.1.0+git.commit.67f1bd470d870714842bf115583dfbbe87eb8b46
+
+  zeromq:
+    git: https://github.com/crystal-community/zeromq-crystal.git
+    version: 0.3.0+git.commit.281d9deac80f0a2eaaccf96fc83778911b5a4aff
+

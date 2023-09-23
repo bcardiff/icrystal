@@ -41,7 +41,7 @@ module ICrystal
 
       Message.key = @config.key
       @session = Session.new(@config)
-      @backend = ICRBackend.new
+      @backend = CrystalInterpreterBackend.new
     end
 
     def run
@@ -109,7 +109,7 @@ module ICrystal
       end
     end
 
-    def error_content(e)
+    def error_content(e : Exception)
       build_content(
         status: "error",
         ename: e.class.to_s,
@@ -117,6 +117,19 @@ module ICrystal
         traceback: e.backtrace.map(&.as(Any)).unshift(
           "#{e.class.to_s.colorize(:red)}: #{e.message}"
         )
+      )
+    end
+
+    def error_content(e : SyntaxCheckResult)
+      # TODO: improve error reporting on syntax. The compiler has better error reporting
+      #       than the repl because the repl prevents _some_ syntax errors from being
+      #       yet it would be nice to have some indication at the exact location of the error.
+      #       Ideally showing the user code again with some ^---- pointing to the error.
+      build_content(
+        status: "error",
+        ename: "syntaxt error",
+        evalue: e.error_message,
+        traceback: [e.error_message.as(Any)]
       )
     end
 
@@ -238,7 +251,8 @@ module ICrystal
       result = @backend.eval(code, store_history)
       output = nil
 
-      if result.is_a?(Icr::ExecutionResult)
+      case result
+      in ExecutionResult
         if result.success?
           if stdout = result.output
             @session.publish("stream", build_content(name: "stdout", text: stdout))
@@ -252,12 +266,10 @@ module ICrystal
             @session.publish "stream", build_content(name: "stderr", text: stdout)
           end
         end
-      else
-        if exception = result.err
-          content = error_content(exception)
-          content["execution_count"] = @execution_count
-          @session.publish "error", content
-        end
+      in SyntaxCheckResult
+        content = error_content(result)
+        content["execution_count"] = @execution_count
+        @session.publish "error", content
       end
 
       @session.send_reply "execute_reply", content

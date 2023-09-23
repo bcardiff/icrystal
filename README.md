@@ -12,8 +12,8 @@ It is ported from the [IRuby](https://github.com/SciRuby/iruby) kernel.
 
 Prerequisites
 
-- The latest version of crystal.
-- LLVM development files.
+- The latest version of [crystal](https://crystal-lang.org/).
+- Be able to [compile crystal from sources](https://crystal-lang.org/install/from_sources/).
 - [Jupyter](https://jupyter.org/)
 - [ZeroMQ](https://zeromq.org/)
 
@@ -24,24 +24,19 @@ git clone https://github.com/RomainFranceschini/icrystal.git
 cd icrystal
 ```
 
-Install dependencies
+Build icrystal, see [Development](#development) section for more details.
 
-```
-shards install
-```
+Register the kernel, see [Usage](#usage) section for more details.
 
-Build icrystal
+Start jupyter.
 
-```
-shards build
-```
 
 ## Usage
 
 To register the kernel (ensure jupyter is installed):
 
 ```
-icrystal register
+./bin/icrystal register
 ```
 
 Now run jupyter and choose the ICrystal kernel as a backend for your notebook:
@@ -58,9 +53,49 @@ jupyter lab
 
 ## How it works
 
-The code submitted to the kernel is compiled using parts of the [icr](https://github.com/crystal-community/icr) shard.
+The code submitted to the kernel is run by the built-in crystal interpreter.
 
 ## Development
+
+To build icrystal, install the dependencies first:
+
+```
+shards install
+```
+
+To build icrystal using the install crystal compiler run:
+
+```
+make all
+```
+
+NOTE: you will need to have the same llvm version installed as the one informed in `crystal --version`.
+
+To build icrystal using crystal sources run:
+
+```
+make all CRYSTAL=~/path/to/crystal-clone/bin/crystal
+```
+
+NOTE: you will need to run `make clean deps` in your crystal-clone first.
+
+In either case, the icrystal binary will be left in the `./bin/icrystal`.
+
+To specify a specific llvm-config, use the `LLVM_CONFIG` environment variable.
+
+### Specs
+
+To run the crystal specs do
+
+```
+make spec
+```
+
+or
+
+```
+make spec CRYSTAL=~/path/to/crystal-clone/bin/crystal
+```
 
 To run the jupyter kernel testing tool (Python 3.4 or greater required):
 
@@ -69,6 +104,12 @@ pip3 install jupyter_kernel_test
 python3 test/test_kernel.py
 ```
 
+### Nix / devenv
+
+If you have [devenv.sh](https://devenv.sh/) installed you can use it to get a python environment with jupyter installed and some safe configuration for kernel development. In particular the kernel registration will be done in a local directory instead of the system-wide one.
+
+The crystal compiler and it's dependency is currently out of the scope of devenv.sh, so you will have to install them manually.
+
 ## Roadmap
 
 - [ ] Widget support
@@ -76,6 +117,7 @@ python3 test/test_kernel.py
 - [ ] Add special commands
 - [ ] Support adding/removing shards dependencies
 - [ ] Write specs
+- [ ] Improve syntax and compiler error reporting
 
 ## Contributing
 

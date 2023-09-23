@@ -199,6 +199,7 @@ module ICrystal
       binded = false
 
       while !binded && tries < max_tries
+        # TODO change to use free port instead of random?
         tries += 1
         random = rand(55534) + 10_000
         binded = socket.bind "#{@config.transport}://#{@config.ip}:#{random}"

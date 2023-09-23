@@ -102,7 +102,7 @@ class ICrystal::Command
       "language"     => "crystal",
     }.to_json)
 
-    here = File.dirname(File.real_path(__FILE__))
+    here = File.dirname(File.realpath(__FILE__))
     FileUtils.cp(Dir[File.join(here, "assets", "*")], dest_dir)
 
     puts "Registered ICrystal at #{dest_dir}"

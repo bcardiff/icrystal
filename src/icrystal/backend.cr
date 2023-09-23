@@ -1,75 +1,84 @@
-require "compiler/crystal/syntax"
+require "http/client"
+require "crystal-repl-server/client"
 
-require "icr/command"
-require "icr/command_stack"
-require "icr/executer"
-require "icr/execution_result"
-require "icr/syntax_check_result"
-
-module Icr
-  DELIMITER       = "|||YIH22hSkVQN|||"
-  CRYSTAL_COMMAND = "crystal"
-end
-
-class Icr::SyntaxCheckResult
-  property err : Crystal::SyntaxException?
-end
+include Crystal::Repl::Server::API
 
 module ICrystal
-  class ICRBackend
-    def initialize(debug = true)
-      @command_stack = Icr::CommandStack.new
-      @executer = Icr::Executer.new(@command_stack, debug)
+  class CrystalInterpreterBackend
+    @client : Crystal::Repl::Server::Client
+
+    def initialize
+      @socket_path = File.tempname("crystal", ".sock")
+
+      exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
+      crystal_repl_server_bin = Path[exec_dir, "crystal-repl-server"].to_s
+
+      @client = Crystal::Repl::Server::Client.start_server_and_connect(server: crystal_repl_server_bin, socket: @socket_path)
+
+      # TODO assert status ok
+      @client.start
     end
 
-    def eval(code, store_history)
-      check_result = check_syntax(code)
-      process_result(check_result, code)
+    def close
+      @client.close
     end
 
-    def check_syntax(code)
-      Crystal::Parser.parse(code)
-      Icr::SyntaxCheckResult.new(:ok)
-    rescue err : Crystal::SyntaxException
-      case err.message.to_s
+    def check_syntax(code) : SyntaxCheckResult
+      response = @client.check_syntax(code)
+      case response
+      when CheckSyntaxSuccess
+        ICrystal::SyntaxCheckResult.new(:ok)
+      when CheckSyntaxError
+        to_icrystal_syntax_check_result(response.message)
+      else
+        raise NotImplementedError.new("Unknown response")
+      end
+    end
+
+    def eval(code, store_history) : ExecutionResult | SyntaxCheckResult
+      response = @client.eval(code)
+      case response
+      when EvalSuccess
+        if response.static_type == "Nil" && response.runtime_type == response.static_type
+          # CHECK: is this a good idea? To avoid retuning nil on method defs or puts
+          #        we hide the value
+          ExecutionResult.new(true, nil, @client.read_stdout, @client.read_stderr)
+        else
+          ExecutionResult.new(true, response.value, @client.read_stdout, @client.read_stderr)
+        end
+      when EvalSyntaxError
+        to_icrystal_syntax_check_result(response.message)
+      when EvalError
+        # TODO: Check if there is a way to get better error traces
+        #       in situations like
+        #
+        #    [1] def bar(x)
+        #          x.foo
+        #        end
+        #
+        #    [2] bar(1)
+        #    >>> instantiating 'bar(Int32)'
+        #
+        #        There in the repl there is some tracing. Not as nice as in the compiler.
+        #        But we don't even have that here.
+        ExecutionResult.new(false, nil, nil, response.message)
+      else
+        raise NotImplementedError.new("Unknown response")
+      end
+    end
+
+    private def to_icrystal_syntax_check_result(message : String)
+      case message
       when .includes?("EOF")
-        Icr::SyntaxCheckResult.new(:unexpected_eof)
+        ICrystal::SyntaxCheckResult.new(:unexpected_eof)
       when .includes?("unterminated char literal")
         # catches error for 'aa' and returns compiler error
-        Icr::SyntaxCheckResult.new(:ok)
+        ICrystal::SyntaxCheckResult.new(:ok)
       when .includes?("unterminated")
         # catches unterminated hashes and arrays
-        Icr::SyntaxCheckResult.new(:unterminated_literal)
+        ICrystal::SyntaxCheckResult.new(:unterminated_literal)
       else
-        Icr::SyntaxCheckResult.new(:error, err.message.to_s)
-      end.tap { |result| result.err = err }
-    end
-
-    private def process_result(check_result : Icr::SyntaxCheckResult, command : String)
-      case check_result.status
-      when :ok
-        @command_stack.push(command)
-        @executer.execute
-      when :unexpected_eof, :unterminated_literal
-        # If syntax is invalid because of unexpected EOF, or
-        # we are still waiting for a closing bracket, keep asking for input
-        check_result
-      when :error
-        # Give it the second try, validate the command in scope of entire file
-        @command_stack.push(command)
-        entire_file_result = check_syntax(@command_stack.to_code)
-        case entire_file_result.status
-        when :ok
-          @executer.execute
-        when :unexpected_eof
-          @command_stack.pop
-          process_result(entire_file_result, command)
-        else
-          @command_stack.pop
-          entire_file_result
-        end
-      else
-        raise("Unknown SyntaxCheckResult status: #{check_result.status}")
+        ICrystal::SyntaxCheckResult.new(:error, message)
       end
     end
   end
