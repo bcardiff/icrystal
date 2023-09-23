@@ -117,6 +117,7 @@ The crystal compiler and it's dependency is currently out of the scope of devenv
 - [ ] Add special commands
 - [ ] Support adding/removing shards dependencies
 - [ ] Write specs
+- [ ] Improve syntax and compiler error reporting
 
 ## Contributing
 

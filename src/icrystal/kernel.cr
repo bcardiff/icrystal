@@ -121,11 +121,15 @@ module ICrystal
     end
 
     def error_content(e : SyntaxCheckResult)
+      # TODO: improve error reporting on syntax. The compiler has better error reporting
+      #       than the repl because the repl prevents _some_ syntax errors from being
+      #       yet it would be nice to have some indication at the exact location of the error.
+      #       Ideally showing the user code again with some ^---- pointing to the error.
       build_content(
         status: "error",
-        ename: "TBD syntaxt error",
+        ename: "syntaxt error",
         evalue: e.error_message,
-        traceback: "TBD backtrace"
+        traceback: [e.error_message.as(Any)]
       )
     end
 

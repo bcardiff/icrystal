@@ -49,6 +49,18 @@ module ICrystal
       when EvalSyntaxError
         to_icrystal_syntax_check_result(response.message)
       when EvalError
+        # TODO: Check if there is a way to get better error traces
+        #       in situations like
+        #
+        #    [1] def bar(x)
+        #          x.foo
+        #        end
+        #
+        #    [2] bar(1)
+        #    >>> instantiating 'bar(Int32)'
+        #
+        #        There in the repl there is some tracing. Not as nice as in the compiler.
+        #        But we don't even have that here.
         ExecutionResult.new(false, nil, nil, response.message)
       else
         raise NotImplementedError.new("Unknown response")

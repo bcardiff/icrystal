@@ -34,5 +34,15 @@ describe ICrystal do
       result = result.as(ICrystal::SyntaxCheckResult)
       result.status.should eq :unexpected_eof
     end
+
+    it "returns compiler errors" do
+      backend = ICrystal::CrystalInterpreterBackend.new
+      result = backend.eval("1.foo", false)
+      result.should eq(ICrystal::ExecutionResult.new(false, nil, nil, "undefined method 'foo' for Int32"))
+
+      assert_eval(backend, "def bar(x)\n  x.foo\nend", nil)
+      result = backend.eval("bar(1)", false)
+      result.should eq(ICrystal::ExecutionResult.new(false, nil, nil, "instantiating 'bar(Int32)'"))
+    end
   end
 end
