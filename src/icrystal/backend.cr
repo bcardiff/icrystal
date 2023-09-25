@@ -17,6 +17,8 @@ module ICrystal
 
       # TODO assert status ok
       @client.start
+
+      @client.eval(%(require "icrystal"))
     end
 
     def close
@@ -42,9 +44,12 @@ module ICrystal
         if response.static_type == "Nil" && response.runtime_type == response.static_type
           # CHECK: is this a good idea? To avoid retuning nil on method defs or puts
           #        we hide the value
-          ExecutionResult.new(true, nil, @client.read_stdout, @client.read_stderr)
+          ExecutionResult.new(true, nil, nil, @client.read_stdout, @client.read_stderr)
+        elsif response.runtime_type == "ICrystal::Raw"
+          raw_value = JSON.parse(response.value)
+          ExecutionResult.new(true, raw_value["value"].as_s, raw_value["mime"].as_s, @client.read_stdout, @client.read_stderr)
         else
-          ExecutionResult.new(true, response.value, @client.read_stdout, @client.read_stderr)
+          ExecutionResult.new(true, response.value, nil, @client.read_stdout, @client.read_stderr)
         end
       when EvalSyntaxError
         to_icrystal_syntax_check_result(response.message)
@@ -61,7 +66,7 @@ module ICrystal
         #
         #        There in the repl there is some tracing. Not as nice as in the compiler.
         #        But we don't even have that here.
-        ExecutionResult.new(false, nil, nil, response.message)
+        ExecutionResult.new(false, nil, nil, nil, response.message)
       else
         raise NotImplementedError.new("Unknown response")
       end

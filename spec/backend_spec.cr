@@ -2,7 +2,7 @@ require "./spec_helper"
 
 def assert_eval(backend, code, value, output = nil, error_output = nil)
   result = backend.eval(code, false)
-  result.should eq(ICrystal::ExecutionResult.new(true, value, output, error_output))
+  result.should eq(ICrystal::ExecutionResult.new(true, value, nil, output, error_output))
 end
 
 describe ICrystal do
@@ -38,11 +38,11 @@ describe ICrystal do
     it "returns compiler errors" do
       backend = ICrystal::CrystalInterpreterBackend.new
       result = backend.eval("1.foo", false)
-      result.should eq(ICrystal::ExecutionResult.new(false, nil, nil, "undefined method 'foo' for Int32"))
+      result.should eq(ICrystal::ExecutionResult.new(false, nil, nil, nil, "undefined method 'foo' for Int32"))
 
       assert_eval(backend, "def bar(x)\n  x.foo\nend", nil)
       result = backend.eval("bar(1)", false)
-      result.should eq(ICrystal::ExecutionResult.new(false, nil, nil, "instantiating 'bar(Int32)'"))
+      result.should eq(ICrystal::ExecutionResult.new(false, nil, nil, nil, "instantiating 'bar(Int32)'"))
     end
   end
 end
