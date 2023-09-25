@@ -13,7 +13,17 @@ module ICrystal
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
       crystal_repl_server_bin = Path[exec_dir, "crystal-repl-server"].to_s
 
-      @client = Crystal::Repl::Server::Client.start_server_and_connect(server: crystal_repl_server_bin, socket: @socket_path)
+      original_crystal_path = `#{crystal_repl_server_bin} env CRYSTAL_PATH`.chomp
+      # TODO move std location to a compile time flag for bundling
+      icrystal_std_lib = Path[exec_dir, "..", "src", "std"].to_s
+      crystal_path = "#{original_crystal_path}:#{icrystal_std_lib}"
+      pp! crystal_path
+
+      @client = Crystal::Repl::Server::Client.start_server_and_connect(
+        server: crystal_repl_server_bin,
+        socket: @socket_path,
+        env: {"CRYSTAL_PATH" => crystal_path}
+      )
 
       # TODO assert status ok
       @client.start
