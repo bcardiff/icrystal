@@ -24,8 +24,6 @@ module ICrystal
   end
 
   class Kernel
-    alias Any = Message::Any
-
     @running = false
 
     def initialize(config_file)
@@ -94,7 +92,7 @@ module ICrystal
     end
 
     def build_content(**kwargs)
-      Message::Dict.new.tap do |content|
+      Dict.new.tap do |content|
         kwargs.each do |k, v|
           content[k.to_s] = v
         end
@@ -197,7 +195,7 @@ module ICrystal
     end
 
     def send_is_complete(msg)
-      content = Message::Dict.new
+      content = Dict.new
 
       code = msg.content["code"].as(String)
       result = @backend.check_syntax(code)

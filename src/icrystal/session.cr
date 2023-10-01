@@ -2,6 +2,7 @@ require "zeromq"
 require "openssl/hmac"
 require "uuid"
 require "json"
+require "../std/icrystal/dict"
 
 module ICrystal
   class Message
@@ -25,9 +26,6 @@ module ICrystal
       def initialize(@type, @session)
       end
     end
-
-    alias Any = String | Int64 | Bool | Nil
-    alias Dict = Hash(String, Any | Array(Any) | Hash(String, Any) | Array(Hash(String, Any)))
 
     property id : String
     property header : Header
