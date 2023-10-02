@@ -1,5 +1,6 @@
 require "http/client"
 require "crystal-repl-server/client"
+require "../ndjson"
 
 include Crystal::Repl::Server::API
 
@@ -17,7 +18,9 @@ module ICrystal
       # TODO move std location to a compile time flag for bundling
       icrystal_std_lib = Path[exec_dir, "..", "src", "std"].to_s
       crystal_path = "#{original_crystal_path}:#{icrystal_std_lib}"
-      pp! crystal_path
+
+      @iopub_reader, @iopub_writer = IO.pipe
+      @iopub_writer.close_on_exec = false
 
       @client = Crystal::Repl::Server::Client.start_server_and_connect(
         server: crystal_repl_server_bin,
@@ -25,10 +28,26 @@ module ICrystal
         env: {"CRYSTAL_PATH" => crystal_path}
       )
 
+      spawn do
+        parser = JSON::NDParser.new(@iopub_reader)
+        loop do
+          # PENDING: decode and send message to session
+          pp! parser.parse
+        end
+      end
+
       # TODO assert status ok
       @client.start
 
+      @client.eval(%(
+        CRYSTAL_SESSION_FD = IO::FileDescriptor.new(#{@iopub_writer.fd}, blocking: false)
+        CRYSTAL_SESSION_FD.close_on_exec = true
+        CRYSTAL_SESSION_FD.sync = true
+      ))
+
       @client.eval(%(require "icrystal"))
+
+      @client.eval(%(ICrystal.init_session))
     end
 
     def close

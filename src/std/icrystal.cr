@@ -1,6 +1,9 @@
 require "json"
+require "./icrystal/session_proxy"
 
 module ICrystal
+  @@session : SessionProxy? = nil
+
   # A `ICrystal::Raw` value is as json. This json is deserialized by the kernel and
   # displayed as appropriate. This is possible because the the kernel knows the
   # type of the result and there is custom logic for `ICrystal::Raw`.
@@ -25,5 +28,14 @@ module ICrystal
 
   def self.json(value)
     Raw.new(mime: "application/json", value: value.to_json)
+  end
+
+  def self.session : SessionProxy
+    @@session.not_nil!("session not initialized")
+  end
+
+  # :nodoc:
+  def self.init_session : Nil
+    @@session = SessionProxy.new
   end
 end
