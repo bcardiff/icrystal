@@ -18,6 +18,10 @@ module ICrystal
     end
   end
 
+  # A `ICrystal::None` value will dismiss the default rendering of values.
+  struct None
+  end
+
   def self.html(value : String)
     Raw.new(mime: "text/html", value: value)
   end
@@ -28,6 +32,10 @@ module ICrystal
 
   def self.json(value)
     Raw.new(mime: "application/json", value: value.to_json)
+  end
+
+  def self.none
+    None.new
   end
 
   def self.session : SessionProxy

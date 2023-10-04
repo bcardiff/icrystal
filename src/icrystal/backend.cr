@@ -74,6 +74,8 @@ module ICrystal
           # CHECK: is this a good idea? To avoid retuning nil on method defs or puts
           #        we hide the value
           ExecutionResult.new(true, nil, nil, @client.read_stdout, @client.read_stderr)
+        elsif response.runtime_type == "ICrystal::None"
+          ExecutionResult.new(true, nil, nil, @client.read_stdout, @client.read_stderr)
         elsif response.runtime_type == "ICrystal::Raw"
           raw_value = JSON.parse(response.value)
           ExecutionResult.new(true, raw_value["value"].as_s, raw_value["mime"].as_s, @client.read_stdout, @client.read_stderr)

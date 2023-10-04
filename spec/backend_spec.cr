@@ -19,6 +19,10 @@ describe ICrystal do
       # But we have this edge case unfortunately
       assert_eval(backend, "nil", nil)
 
+      # ICrystal::None are ignored based on the runtime type
+      assert_eval(backend, "ICrystal.none", nil)
+      assert_eval(backend, "ICrystal.none || 1", nil)
+
       # Puts does not generate values
       assert_eval(backend, "puts \"Hello, World\"", nil, "Hello, World\n")
       assert_eval(backend, "puts \"1 + 2 = #{1 + 2}\"", nil, "1 + 2 = 3\n")
