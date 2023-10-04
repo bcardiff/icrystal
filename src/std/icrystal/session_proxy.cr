@@ -8,7 +8,7 @@ module ICrystal
     def initialize
     end
 
-    def publish(msg_type : String, content : Dict)
+    def publish(msg_type : String, content : Dict) : Nil
       CRYSTAL_SESSION_FD.puts({method: "publish", msg_type: msg_type, content: content}.to_json)
     end
   end

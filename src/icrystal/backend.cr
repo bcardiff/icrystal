@@ -5,10 +5,22 @@ require "../ndjson"
 include Crystal::Repl::Server::API
 
 module ICrystal
+  module BackendCallbacks
+    abstract def publish(msg_type : String, content : Dict) : Nil
+  end
+
+  struct BackedCallbackCall
+    include JSON::Serializable
+
+    property method : String
+    property msg_type : String
+    property content : Dict
+  end
+
   class CrystalInterpreterBackend
     @client : Crystal::Repl::Server::Client
 
-    def initialize
+    def initialize(@callbacks : BackendCallbacks)
       @socket_path = File.tempname("crystal", ".sock")
 
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
@@ -31,8 +43,20 @@ module ICrystal
       spawn do
         parser = JSON::NDParser.new(@iopub_reader)
         loop do
-          # PENDING: decode and send message to session
-          pp! parser.parse
+          begin
+            # TODO find a way to avoid this double parsing
+            # doing `call = BackedCallbackCall.from_json(@iopub_reader)` does not work
+            call = BackedCallbackCall.from_json(parser.parse.to_json)
+
+            case call.method
+            when "publish"
+              callbacks.publish(call.msg_type, call.content)
+            else
+              Log.error { "Kernel error: method '#{call.method}' is not handled" }
+            end
+          rescue e
+            Log.error { "Kernel error: #{e.message}\n#{e.backtrace.join('\n')}" }
+          end
         end
       end
 

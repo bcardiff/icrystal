@@ -79,6 +79,8 @@ module ICrystal
   end
 
   class Session
+    include BackendCallbacks
+
     private getter! heartbeat : ZMQ::Socket, iopub : ZMQ::Socket,
       stdin : ZMQ::Socket, shell : ZMQ::Socket
 
@@ -106,7 +108,7 @@ module ICrystal
     end
 
     # sends a message over the iopub socket.
-    def publish(msg_type, content)
+    def publish(msg_type : String, content : Dict) : Nil
       id = identifiers_for(msg_type, content)
       send(iopub, msg_type, id, content)
     end

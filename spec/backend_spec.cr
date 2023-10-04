@@ -5,10 +5,23 @@ def assert_eval(backend, code, value, output = nil, error_output = nil)
   result.should eq(ICrystal::ExecutionResult.new(true, value, nil, output, error_output))
 end
 
+class MockBackendCallbacks
+  include ICrystal::BackendCallbacks
+
+  getter last_publish_msg_type : String?
+  getter last_publish_content : ICrystal::Dict?
+
+  def publish(msg_type : String, content : ICrystal::Dict) : Nil
+    @last_publish_msg_type = msg_type
+    @last_publish_content = content
+  end
+end
+
 describe ICrystal do
   describe "backend" do
     it "evals" do
-      backend = ICrystal::CrystalInterpreterBackend.new
+      callbacks = MockBackendCallbacks.new
+      backend = ICrystal::CrystalInterpreterBackend.new(callbacks)
       assert_eval(backend, "1 + 2", "3")
 
       # def has not value output
@@ -28,10 +41,19 @@ describe ICrystal do
       assert_eval(backend, "puts \"1 + 2 = #{1 + 2}\"", nil, "1 + 2 = 3\n")
       assert_eval(backend, "STDERR.puts \"Oops!\"", nil, nil, "Oops!\n")
       assert_eval(backend, "STDERR.puts \"Oops * 2!\"", nil, nil, "Oops * 2!\n")
+
+      # Backend callbacks works
+      assert_eval(backend, "ICrystal.session.publish(\"foo\", {\"key\" => 1i64}); ICrystal.none", nil)
+      callbacks.last_publish_msg_type.should eq "foo"
+      callbacks.last_publish_content.should eq({"key" => 1i64})
+
+      assert_eval(backend, "ICrystal.session.publish(\"bar\", {\"key\" => 2i64}); ICrystal.none", nil)
+      callbacks.last_publish_msg_type.should eq "bar"
+      callbacks.last_publish_content.should eq({"key" => 2i64})
     end
 
     it "returns syntax errors" do
-      backend = ICrystal::CrystalInterpreterBackend.new
+      backend = ICrystal::CrystalInterpreterBackend.new(MockBackendCallbacks.new)
       result = backend.eval("a = [1", false)
       result.should be_a(ICrystal::SyntaxCheckResult)
 
@@ -40,7 +62,7 @@ describe ICrystal do
     end
 
     it "returns compiler errors" do
-      backend = ICrystal::CrystalInterpreterBackend.new
+      backend = ICrystal::CrystalInterpreterBackend.new(MockBackendCallbacks.new)
       result = backend.eval("1.foo", false)
       result.should eq(ICrystal::ExecutionResult.new(false, nil, nil, nil, "undefined method 'foo' for Int32"))
 

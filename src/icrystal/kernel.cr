@@ -39,7 +39,7 @@ module ICrystal
 
       Message.key = @config.key
       @session = Session.new(@config)
-      @backend = CrystalInterpreterBackend.new
+      @backend = CrystalInterpreterBackend.new(@session)
     end
 
     def run
