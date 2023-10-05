@@ -251,6 +251,8 @@ module ICrystal
         execution_count: @execution_count
       )
 
+      @backend.eval("ICrystal.session.execution_count = #{@execution_count}", false)
+
       result = @backend.eval(code, store_history)
       output = nil
       output_mime_type = nil
