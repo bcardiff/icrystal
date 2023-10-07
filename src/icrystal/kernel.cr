@@ -24,8 +24,6 @@ module ICrystal
   end
 
   class Kernel
-    alias Any = Message::Any
-
     @running = false
 
     def initialize(config_file)
@@ -41,7 +39,7 @@ module ICrystal
 
       Message.key = @config.key
       @session = Session.new(@config)
-      @backend = CrystalInterpreterBackend.new
+      @backend = CrystalInterpreterBackend.new(@session)
     end
 
     def run
@@ -94,7 +92,7 @@ module ICrystal
     end
 
     def build_content(**kwargs)
-      Message::Dict.new.tap do |content|
+      Dict.new.tap do |content|
         kwargs.each do |k, v|
           content[k.to_s] = v
         end
@@ -197,7 +195,7 @@ module ICrystal
     end
 
     def send_is_complete(msg)
-      content = Message::Dict.new
+      content = Dict.new
 
       code = msg.content["code"].as(String)
       result = @backend.check_syntax(code)
@@ -235,6 +233,11 @@ module ICrystal
       store_history = msg.content["store_history"].as(Bool)
       silent = msg.content["silent"].as(Bool)
 
+      # TODO: Handle that in order to obtain the current execution counter for
+      #       the purposes of displaying input prompts, frontends may make an execution
+      #       request with an empty code string and silent=True.
+      #       Source: https://jupyter-client.readthedocs.io/en/latest/messaging.html#execute
+
       @execution_count += 1 if store_history
       @session.publish("execute_input", build_content(
         code: code,
@@ -248,8 +251,11 @@ module ICrystal
         execution_count: @execution_count
       )
 
+      @backend.eval("ICrystal.session.execution_count = #{@execution_count}", false)
+
       result = @backend.eval(code, store_history)
       output = nil
+      output_mime_type = nil
 
       case result
       in ExecutionResult
@@ -258,10 +264,15 @@ module ICrystal
             @session.publish("stream", build_content(name: "stdout", text: stdout))
           end
 
-          if (value = result.value) && !value.includes?("nil")
+          # TODO: seems that stderr handling is missing if the execution was successful
+
+          # CHECK: this might not me needed anymore since the nil check is done in the backend
+          if (value = result.value)
             output = value
+            output_mime_type = result.value_mime_type
           end
         else
+          # TODO: seems that stdout handling is missing if the execution errored
           if stdout = result.error_output
             @session.publish "stream", build_content(name: "stderr", text: stdout)
           end
@@ -275,11 +286,19 @@ module ICrystal
       @session.send_reply "execute_reply", content
 
       unless output.nil? || silent
-        @session.publish("execute_result", build_content(
-          data: build_hash("text/plain": output),
-          metadata: {} of String => Any,
-          execution_count: @execution_count
-        ))
+        if output_mime_type.nil?
+          @session.publish("execute_result", build_content(
+            data: build_hash("text/plain": output),
+            metadata: {} of String => Any,
+            execution_count: @execution_count
+          ))
+        else
+          @session.publish("execute_result", build_content(
+            data: {output_mime_type => output.as(Any)},
+            metadata: {} of String => Any,
+            execution_count: @execution_count
+          ))
+        end
       end
     end
 
