@@ -55,6 +55,34 @@ jupyter lab
 
 The code submitted to the kernel is run by the built-in crystal interpreter.
 
+## Additional prelude
+
+There are some extended prelude available when evaluating Crystal code from the notebook.
+See [./src/std](.src/std). The main functionality is to return rich output like
+
+```crystal
+ICrystal.html "<h1>hello</h1>"
+```
+
+or to skip the default output
+
+```crystal
+ICrystal.none
+```
+
+and allow you to send `display_data`, `update_display_data` messages directly.
+
+```crystal
+ICrystal.session.publish("display_data", {
+  "data"            => {"text/html" => "<h1>hello</h1>"},
+  "metadata"        => {} of String => ICrystal::Any,
+  "transient"       => {"display_id" => "some_id"},
+})
+ICrystal.none
+```
+
+See [./samples/30-advanced-widgets.ipynb](samples/30-advanced-widgets.ipynb) for an example.
+
 ## Development
 
 To build icrystal, install the dependencies first:
@@ -113,7 +141,7 @@ The crystal compiler and it's dependency is currently out of the scope of devenv
 ## Roadmap
 
 - [ ] Widget support
-- [ ] Rich output (images, ...) support
+- [x] Rich output (images, ...) support
 - [ ] Add special commands
 - [ ] Support adding/removing shards dependencies
 - [ ] Write specs
