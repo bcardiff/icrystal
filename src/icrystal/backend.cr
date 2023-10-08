@@ -21,6 +21,8 @@ module ICrystal
     @client : Crystal::Repl::Server::Client
 
     def initialize(@callbacks : BackendCallbacks)
+      work_dir = File.tempname("icrystal", ".dir")
+      Dir.mkdir(work_dir)
       @socket_path = File.tempname("crystal", ".sock")
 
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
@@ -37,7 +39,8 @@ module ICrystal
       @client = Crystal::Repl::Server::Client.start_server_and_connect(
         server: crystal_repl_server_bin,
         socket: @socket_path,
-        env: {"CRYSTAL_PATH" => crystal_path}
+        env: {"CRYSTAL_PATH" => crystal_path},
+        chdir: work_dir,
       )
 
       spawn do

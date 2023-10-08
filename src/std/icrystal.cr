@@ -1,5 +1,6 @@
 require "json"
 require "./icrystal/session_proxy"
+require "./icrystal/shards"
 
 module ICrystal
   @@session : SessionProxy? = nil
