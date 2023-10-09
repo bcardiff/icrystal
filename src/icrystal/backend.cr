@@ -109,10 +109,11 @@ module ICrystal
           ExecutionResult.new(true, raw_value["value"].as_s, raw_value["mime"].as_s, @client.read_stdout, @client.read_stderr)
         elsif response.runtime_type == "ICrystal::Shards"
           File.write(File.join(@work_dir, "shard.yml"), response.value)
-          shards_process = Process.new("shards --no-color install", shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit, chdir: @work_dir)
+          shards_process = Process.new("shards --no-color install", shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Pipe, chdir: @work_dir)
           shards_output = shards_process.output.gets_to_end
+          shards_error = shards_process.error.gets_to_end
           status = shards_process.wait
-          ExecutionResult.new(true, "#{shards_output}\n#{status}", nil, @client.read_stdout, @client.read_stderr)
+          ExecutionResult.new(true, "#{shards_output}\n#{shards_error}\n#{status}", nil, @client.read_stdout, @client.read_stderr)
         else
           ExecutionResult.new(true, response.value, nil, @client.read_stdout, @client.read_stderr)
         end
