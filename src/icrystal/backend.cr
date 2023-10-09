@@ -19,10 +19,11 @@ module ICrystal
 
   class CrystalInterpreterBackend
     @client : Crystal::Repl::Server::Client
+    @work_dir : String
 
     def initialize(@callbacks : BackendCallbacks)
-      work_dir = File.tempname("icrystal", ".dir")
-      Dir.mkdir(work_dir)
+      @work_dir = File.tempname("icrystal", ".dir")
+      Dir.mkdir(@work_dir)
       @socket_path = File.tempname("crystal", ".sock")
 
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
@@ -40,7 +41,7 @@ module ICrystal
         server: crystal_repl_server_bin,
         socket: @socket_path,
         env: {"CRYSTAL_PATH" => crystal_path},
-        chdir: work_dir,
+        chdir: @work_dir,
       )
 
       spawn do
@@ -106,6 +107,12 @@ module ICrystal
         elsif response.runtime_type == "ICrystal::Raw"
           raw_value = JSON.parse(response.value)
           ExecutionResult.new(true, raw_value["value"].as_s, raw_value["mime"].as_s, @client.read_stdout, @client.read_stderr)
+        elsif response.runtime_type == "ICrystal::Shards"
+          File.write(File.join(@work_dir, "shard.yml"), response.value)
+          shards_process = Process.new("shards --no-color install", shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit, chdir: @work_dir)
+          shards_output = shards_process.output.gets_to_end
+          status = shards_process.wait
+          ExecutionResult.new(true, "#{shards_output}\n#{status}", nil, @client.read_stdout, @client.read_stderr)
         else
           ExecutionResult.new(true, response.value, nil, @client.read_stdout, @client.read_stderr)
         end

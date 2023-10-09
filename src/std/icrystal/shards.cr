@@ -1,9 +1,15 @@
 module ICrystal
-  def self.shards(content : String)
-    File.write(File.join(Dir.current, "shard.yml"), content)
-    # NOTE: This will not work due to https://github.com/crystal-lang/crystal/issues/12241
-    puts %x(shards install)
+  record Shards, content : String do
+    def inspect(io : IO)
+      io << content
+    end
+  end
 
-    puts "Shards installed"
+  def self.shards(content : String)
+    # NOTE: This will not work due to https://github.com/crystal-lang/crystal/issues/12241
+    # File.write(File.join(Dir.current, "shard.yml"), content)
+    # puts %x(shards install)
+
+    Shards.new(content)
   end
 end
