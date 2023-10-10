@@ -66,6 +66,7 @@ module ICrystal
       @session.publish "error", error_content(e)
     ensure
       Log.debug { "Stopping ICrystal kernel..." }
+      @backend.close
     end
 
     def handle_request(type, msg)

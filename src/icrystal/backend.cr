@@ -19,17 +19,21 @@ module ICrystal
 
   class CrystalInterpreterBackend
     @client : Crystal::Repl::Server::Client
+    @work_dir : String
 
     def initialize(@callbacks : BackendCallbacks)
+      @work_dir = File.tempname("icrystal", ".dir")
+      Dir.mkdir(@work_dir)
       @socket_path = File.tempname("crystal", ".sock")
 
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
       crystal_repl_server_bin = Path[exec_dir, "crystal-repl-server"].to_s
 
+      local_shards_lib = find_local_shards_lib(Dir.current)
       original_crystal_path = `#{crystal_repl_server_bin} env CRYSTAL_PATH`.chomp
       # TODO move std location to a compile time flag for bundling
       icrystal_std_lib = Path[exec_dir, "..", "src", "std"].to_s
-      crystal_path = "#{original_crystal_path}:#{icrystal_std_lib}"
+      crystal_path = [local_shards_lib, original_crystal_path, icrystal_std_lib].compact.join(":")
 
       @iopub_reader, @iopub_writer = IO.pipe
       @iopub_writer.close_on_exec = false
@@ -37,7 +41,8 @@ module ICrystal
       @client = Crystal::Repl::Server::Client.start_server_and_connect(
         server: crystal_repl_server_bin,
         socket: @socket_path,
-        env: {"CRYSTAL_PATH" => crystal_path}
+        env: {"CRYSTAL_PATH" => crystal_path},
+        chdir: @work_dir,
       )
 
       spawn do
@@ -74,6 +79,18 @@ module ICrystal
       @client.eval(%(ICrystal.init_session))
     end
 
+    # finds the closes shard.yml file in the directory
+    def find_local_shards_lib(directory : String) : String?
+      dirs = Path[directory].parents
+      dirs << Path[directory]
+      dirs.reverse!
+
+      dirs.each do |dir|
+        shard_yml = File.join(dir, "shard.yml")
+        return File.join(dir, "lib").to_s if File.exists?(shard_yml)
+      end
+    end
+
     def close
       @client.close
     end
@@ -103,6 +120,13 @@ module ICrystal
         elsif response.runtime_type == "ICrystal::Raw"
           raw_value = JSON.parse(response.value)
           ExecutionResult.new(true, raw_value["value"].as_s, raw_value["mime"].as_s, @client.read_stdout, @client.read_stderr)
+        elsif response.runtime_type == "ICrystal::Shards"
+          File.write(File.join(@work_dir, "shard.yml"), response.value)
+          shards_process = Process.new("shards --no-color install", shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Pipe, chdir: @work_dir)
+          shards_output = shards_process.output.gets_to_end
+          shards_error = shards_process.error.gets_to_end
+          status = shards_process.wait
+          ExecutionResult.new(true, "#{shards_output}\n#{shards_error}\n#{status}", nil, @client.read_stdout, @client.read_stderr)
         else
           ExecutionResult.new(true, response.value, nil, @client.read_stdout, @client.read_stderr)
         end

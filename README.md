@@ -51,11 +51,11 @@ or
 jupyter lab
 ```
 
-## How it works
+### How it works
 
 The code submitted to the kernel is run by the built-in crystal interpreter.
 
-## Additional prelude
+### Additional prelude
 
 There are some extended prelude available when evaluating Crystal code from the notebook.
 See [./src/std](.src/std). The main functionality is to return rich output like
@@ -82,6 +82,41 @@ ICrystal.none
 ```
 
 See [./samples/30-advanced-widgets.ipynb](samples/30-advanced-widgets.ipynb) for an example.
+
+### Shards
+
+When running code by a jupyter server you will have access to
+
+* Crystal's std-lib
+* Some additionals explained in [addional prelude](#additional-prelude)
+* Shards installed in a container folder where the server is launched
+* Shards declared in the notebook itself
+
+A notebook can declare which shards to install via `ICrystal.shards` method. *IMPORTANT:* The call to this method must be in its own cell.
+
+Either embed the shards.yml content in the notebook:
+
+```crystal
+ICrystal.shards <<-YML
+  name: notebook
+  version: 0.0.1
+  license: MIT
+
+  dependencies:
+    lorem:
+      github: bcardiff/crystal-lorem
+  YML
+```
+
+Or use a DSL
+
+```crystal
+ICrystal.shards do
+  dep "lorem", github: "bcardiff/crystal-lorem"
+end
+```
+
+If you need to customize things further use the CRYSTAL_PATH environment variable as with the crystal compiler.
 
 ## Development
 
@@ -143,7 +178,7 @@ The crystal compiler and it's dependency is currently out of the scope of devenv
 - [ ] Widget support
 - [x] Rich output (images, ...) support
 - [ ] Add special commands
-- [ ] Support adding/removing shards dependencies
+- [x] Support adding/removing shards dependencies
 - [ ] Write specs
 - [ ] Improve syntax and compiler error reporting
 
