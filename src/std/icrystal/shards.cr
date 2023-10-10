@@ -51,7 +51,7 @@ module ICrystal
       end
     end
 
-    def github(name : String, repository : String)
+    def dep(name : String, *, github repository : String)
       @dependencies << GitHubDependency.new(name, repository)
     end
   end
