@@ -29,10 +29,11 @@ module ICrystal
       exec_dir = File.dirname(Process.executable_path || raise "Unable to find executable path")
       crystal_repl_server_bin = Path[exec_dir, "crystal-repl-server"].to_s
 
+      local_shards_lib = find_local_shards_lib(Dir.current)
       original_crystal_path = `#{crystal_repl_server_bin} env CRYSTAL_PATH`.chomp
       # TODO move std location to a compile time flag for bundling
       icrystal_std_lib = Path[exec_dir, "..", "src", "std"].to_s
-      crystal_path = "#{original_crystal_path}:#{icrystal_std_lib}"
+      crystal_path = [local_shards_lib, original_crystal_path, icrystal_std_lib].compact.join(":")
 
       @iopub_reader, @iopub_writer = IO.pipe
       @iopub_writer.close_on_exec = false
@@ -76,6 +77,18 @@ module ICrystal
       @client.eval(%(require "icrystal"))
 
       @client.eval(%(ICrystal.init_session))
+    end
+
+    # finds the closes shard.yml file in the directory
+    def find_local_shards_lib(directory : String) : String?
+      dirs = Path[directory].parents
+      dirs << Path[directory]
+      dirs.reverse!
+
+      dirs.each do |dir|
+        shard_yml = File.join(dir, "shard.yml")
+        return File.join(dir, "lib").to_s if File.exists?(shard_yml)
+      end
     end
 
     def close
