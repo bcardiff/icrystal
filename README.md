@@ -81,7 +81,7 @@ ICrystal.session.publish("display_data", {
 ICrystal.none
 ```
 
-See [./samples/30-advanced-widgets.ipynb](samples/30-advanced-widgets.ipynb) for an example.
+See [./samples/30-update-display.ipynb](samples/30-update-display.ipynb) for an example.
 
 ### Shards
 
@@ -130,6 +130,12 @@ To build icrystal using the install crystal compiler run:
 
 ```
 make all
+```
+
+It is recommended to build the crystal-repl-server in release mode first.
+
+```
+make bin/crystal-repl-server FLAGS=--release
 ```
 
 NOTE: you will need to have the same llvm version installed as the one informed in `crystal --version`.
