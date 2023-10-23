@@ -2,11 +2,18 @@
 
 ICrystal is a crystal kernel for [Jupyter project](https://jupyter.org/try).
 
-Current status: early development stages (the kernel is very minimal). Expect more features in the future.
+This repo started as a fork of [RomainFranceschini/icrystal](https://github.com/RomainFranceschini/icrystal) to explore how crystal interpreter can be leveraged. [RomainFranceschini/icrystal](https://github.com/RomainFranceschini/icrystal) was ported from the [IRuby](https://github.com/SciRuby/iruby) kernel.
 
-It is ported from the [IRuby](https://github.com/SciRuby/iruby) kernel.
+This project motivated the creation of [bcardiff/crystal-repl-server](https://github.com/bcardiff/crystal-repl-server) as a way to interact with the crystal interpreter.
 
-![icrystal](https://user-images.githubusercontent.com/470056/81830095-f25cd280-953b-11ea-9922-0f6477399cef.gif)
+Current status:
+
+* Early development stages (the kernel is very minimal)
+* Executes code using the experimental crystal interpreter
+* Supports rich output (images, html, svg, ...)
+* Supports shards dependencies
+
+https://github.com/bcardiff/icrystal/assets/459923/7cf13ddc-f7fe-4837-9110-5fd753ab25c9
 
 ## Installation
 
@@ -20,7 +27,7 @@ Prerequisites
 Clone the repository and switch current directory:
 
 ```
-git clone https://github.com/RomainFranceschini/icrystal.git
+git clone https://github.com/bcardiff/icrystal.git
 cd icrystal
 ```
 
@@ -190,7 +197,7 @@ The crystal compiler and it's dependency is currently out of the scope of devenv
 
 ## Contributing
 
-1. Fork it (<https://github.com/RomainFranceschini/icrystal/fork>)
+1. Fork it (<https://github.com/bcardiff/icrystal/fork>)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
@@ -199,6 +206,7 @@ The crystal compiler and it's dependency is currently out of the scope of devenv
 ## Contributors
 
 - [Romain Franceschini](https://github.com/RomainFranceschini) - creator and maintainer
+- [Brian J. Cardiff](https://github.com/bcardiff) - maintainer
 
 ## License
 
